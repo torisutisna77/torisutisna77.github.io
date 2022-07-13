@@ -15,7 +15,7 @@ Mau curhat, mau keluh kesah, mau do'a dan harapan juga boleh. </p>
 	<strong>Cepat, Lihat dan pesan sekarang juga!</strong>
 </p>
 
-<p><img src="images/buku.jpg"></p>
+<p><img src="buku.jpg"></p>
 
 
 <p>Barang tidak sampai ke tempat anda? <strong>Garansi 100% uang kembali</strong></p>
