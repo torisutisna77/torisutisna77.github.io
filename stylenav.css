@@ -1,0 +1,94 @@
+body {
+	margin: 0;
+	font-family: Arial, sans-serif;
+	background: #53ddf8;
+}
+.navbar{
+	background: #212121;
+	margin: 0;
+	padding: 20px 30px;
+}
+
+.logo{
+	font-size: 14pt;
+	font-weight: bold;
+	text-decoration: none;
+	color: white;
+}
+
+.container{
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.menu{
+	margin: 0;
+	display: flex;
+	list-style: none;
+	padding: 0;
+}
+
+.menu li{
+	padding-left: 0;
+	margin-right: 10px;
+}
+
+.menu li a{
+	padding:10px;
+	color: white;
+	text-decoration: none;
+	display: inline-block;
+}
+.menu li a:hover{
+    background: #9847f5;
+    }
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+.dropdown-content {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: #a023f3;
+    min-width: 100px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1);
+    overflow: hidden;
+    display: none;
+    z-index: 1;
+    transform: translateY(10px);
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+    transform: translateY(0);
+}
+
+.dropdown-content a {
+    color: #333;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    transition: background-color 0.3s ease;
+    border-left: 4px solid transparent;
+}
+.dropdown-content a:hover {
+    background-color: #f1f1f1;
+}
+
+.my-button {
+  background-color: blueviolet;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.my-button:hover {
+  background-color: darkblue;
+}
