@@ -80,15 +80,40 @@ body {
     background-color: #f1f1f1;
 }
 
-.my-button {
-  background-color: blueviolet;
-  color: white;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
+header {
+  background-color: #333;
+  color: #fff;
+  padding: 20px;
+  text-align: center;
 }
 
-.my-button:hover {
-  background-color: darkblue;
+#profile {
+  display: flex;
+  padding: 20px;
+  align-items: center;
+}
+
+#profile img {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  margin-right: 20px;
+}
+
+.profile-info {
+  flex: 1;
+}
+
+#experience, #skills, #about {
+  padding: 20px;
+}
+
+footer {
+  background-color: transparent;
+  color: #fff;
+  text-align: center;
+  padding: 10px;;
+  bottom: 0;
+    width: 100%;
+    position: fixed;
 }
