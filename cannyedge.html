@@ -1,0 +1,444 @@
+<!--
+Palette Name: Brilliant Blues Vibrant (#0F172A, #1E293B, #38BDF8, #818CF8, #F8FAFC, #FBBF24)
+
+Narrative Plan Summary:
+1. Introduction & Hook: Introduce the industrial Quality Control scenario (automating piston ring inspection).
+2. Process Flow: Visually map the 4 distinct stages of Canny Edge Detection (Gaussian, Sobel, Thinning, Hysteresis) using CSS Grid and Unicode typography.
+3. Hysteresis Visualization: Explain the core logic of hysteresis thresholding with a dynamic Line Chart, showing how weak pixels are connected.
+4. Visual Descriptors: Use a Plotly WebGL scatter plot to simulate the extracted contour coordinates of a piston ring, paired with a Radar Chart comparing an ideal vs scanned ring based on geometric metrics.
+5. Parameter Simulation: Analyze the effects of Canny parameters (Sigma, Low, High) using a Grouped Bar Chart to show the trade-offs (dirty edges vs broken contours).
+6. Conclusion/Reflection: Compare Canny vs Otsu in extreme lighting (license plate scenario) to prove Canny's superiority in gradient detection.
+
+Infographic Chart Selection Summary:
+- Data Point: Hysteresis Signal -> Goal: Compare/Relationships -> Chosen Viz: Line Chart (Chart.js) -> Justification: Best for showing a continuous intensity signal moving across constant High/Low threshold lines. Uses Canvas, NO SVG.
+- Data Point: Extracted Ring Contour -> Goal: Relationships/Distribution -> Chosen Viz: Scatter Plot (Plotly.js WebGL) -> Justification: Accurately plots 2D coordinates of the detected boundary without relying on SVG. Uses 'scattergl'. NO SVG.
+- Data Point: Ring Visual Descriptors -> Goal: Compare -> Chosen Viz: Radar Chart (Chart.js) -> Justification: Ideal for multi-variable geometric comparison (Area, Perimeter, Circularity) between Ideal and Actual rings. Uses Canvas, NO SVG.
+- Data Point: Parameter Trade-offs -> Goal: Compare -> Chosen Viz: Grouped Bar Chart (Chart.js) -> Justification: Clearly contrasts the negative impacts (false positives vs false negatives) when parameters are too low or too high. Uses Canvas, NO SVG.
+
+CONFIRMATION: NEITHER Mermaid JS NOR SVG were used anywhere in the output. All graphics rely on Canvas, WebGL, CSS, and Unicode.
+-->
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canny Edge Detection: Industrial Quality Control</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0F172A; color: #F8FAFC; overflow-x: hidden; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        
+        .chart-container { 
+            position: relative; 
+            width: 100%; 
+            max-width: 800px; 
+            margin-left: auto; 
+            margin-right: auto; 
+            height: 350px; 
+            max-height: 400px; 
+        }
+        @media (max-width: 768px) {
+            .chart-container { height: 250px; }
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, #1E293B, #111827);
+            border: 1px solid #334155;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+        }
+        
+        .glow-border-b { border-bottom: 2px solid #38BDF8; box-shadow: 0 4px 15px -3px rgba(56, 189, 248, 0.3); }
+        .glow-text { text-shadow: 0 0 10px rgba(56, 189, 248, 0.5); }
+    </style>
+</head>
+<body class="antialiased pb-20">
+
+    <nav class="sticky top-0 z-50 bg-[#0F172A]/90 backdrop-blur-md border-b border-[#334155] px-6 py-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="font-bold text-xl tracking-wider text-[#38BDF8]">CANNY<span class="text-white">VISION</span></div>
+            <div class="text-sm text-slate-400 hidden md:block">Analisis Kontur & Inspeksi Otomatis</div>
+        </div>
+    </nav>
+
+    <header class="max-w-7xl mx-auto px-6 pt-20 pb-16 text-center">
+        <div class="inline-block bg-[#1E293B] text-[#38BDF8] font-mono text-sm px-4 py-1 rounded-full mb-6 border border-[#38BDF8]/30">
+            &#9654; INDUSTRIAL QUALITY CONTROL
+        </div>
+        <h1 class="text-5xl md:text-7xl font-extrabold mb-6 tracking-tight">
+            Contour <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#38BDF8] to-[#818CF8] glow-text">Segmentation</span>
+        </h1>
+        <p class="text-xl md:text-2xl text-slate-400 max-w-3xl mx-auto font-light leading-relaxed">
+            Mekanisme kerja algoritma Canny Edge Detection untuk mengotomatisasi pengecekan diameter komponen mesin secara presisi tinggi.
+        </p>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 space-y-24">
+
+        <section class="glass-card rounded-3xl p-8 md:p-12">
+            <h2 class="text-3xl font-bold mb-4 flex items-center text-[#F8FAFC]">
+                <span class="text-4xl mr-4">&#128269;</span> Skenario: Inspeksi Dimensi
+            </h2>
+            <p class="text-lg text-slate-300 leading-relaxed mb-8">
+                Sebuah pabrik otomotif perlu mengotomatisasi pengecekan diameter <strong>ring piston</strong>. Ring diletakkan di atas ban berjalan dengan latar belakang kontras. Tujuan sistem adalah mendeteksi tepi ring secara absolut untuk menghitung radiusnya tanpa terganggu oleh pantulan cahaya logam.
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="bg-[#0F172A] p-6 rounded-2xl border border-[#334155] relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-gradient-to-br from-[#38BDF8]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="text-4xl mb-4 text-[#818CF8]">&#127787;</div>
+                    <h3 class="font-bold text-xl mb-2">1. Gaussian Blur</h3>
+                    <p class="text-sm text-slate-400">Menghaluskan pantulan cahaya kecil (specular reflection) pada logam agar tidak salah dideteksi sebagai tepi (Noise Reduction).</p>
+                </div>
+
+                <div class="bg-[#0F172A] p-6 rounded-2xl border border-[#334155] relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-gradient-to-br from-[#38BDF8]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="text-4xl mb-4 text-[#818CF8]">&#128200;</div>
+                    <h3 class="font-bold text-xl mb-2">2. Sobel Gradient</h3>
+                    <p class="text-sm text-slate-400">Menghitung turunan parsial intensitas. Latar gelap ke logam terang menghasilkan garis putih tebal di sekeliling ring.</p>
+                </div>
+
+                <div class="bg-[#0F172A] p-6 rounded-2xl border border-[#334155] relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-gradient-to-br from-[#38BDF8]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="text-4xl mb-4 text-[#818CF8]">&#9986;</div>
+                    <h3 class="font-bold text-xl mb-2">3. Suppression</h3>
+                    <p class="text-sm text-slate-400">Menghapus piksel non-maksimum lokal di sepanjang arah gradien. Garis tebal ditekan menjadi sangat tipis (1 piksel).</p>
+                </div>
+
+                <div class="bg-[#0F172A] p-6 rounded-2xl border border-[#334155] relative overflow-hidden group glow-border-b">
+                    <div class="absolute inset-0 bg-gradient-to-br from-[#38BDF8]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="text-4xl mb-4 text-[#38BDF8]">&#128279;</div>
+                    <h3 class="font-bold text-xl mb-2 text-[#38BDF8]">4. Hysteresis</h3>
+                    <p class="text-sm text-slate-400">Menyambung tepi yang terputus akibat bayangan. Hanya piksel lemah yang terhubung dengan tepi kuat yang dipertahankan.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+                <h2 class="text-3xl font-bold mb-6 text-[#F8FAFC]">Logika Hysteresis Thresholding</h2>
+                <p class="text-lg text-slate-300 leading-relaxed mb-6">
+                    Pencahayaan yang tidak merata sering memutus garis tepi ring piston. Hysteresis menyelesaikan ini dengan dua ambang batas: 
+                    <span class="text-[#38BDF8] font-bold">High Threshold</span> dan <span class="text-[#FBBF24] font-bold">Low Threshold</span>.
+                </p>
+                <ul class="space-y-4 text-slate-400">
+                    <li class="flex items-start"><span class="text-[#38BDF8] mr-3">&#9632;</span> Gradien > High: Pasti Tepi (Kuat).</li>
+                    <li class="flex items-start"><span class="text-slate-600 mr-3">&#9632;</span> Gradien < Low: Bukan Tepi (Dihapus).</li>
+                    <li class="flex items-start"><span class="text-[#FBBF24] mr-3">&#9632;</span> Low < Gradien < High: Tepi Lemah. Dipertahankan <strong>hanya jika</strong> terhubung fisik dengan Tepi Kuat.</li>
+                </ul>
+            </div>
+            
+            <div class="glass-card p-6 rounded-3xl">
+                <div class="chart-container" style="height: 300px;">
+                    <canvas id="hysteresisChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section class="glass-card rounded-3xl p-8 md:p-12 border-t-4 border-[#818CF8]">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-[#F8FAFC]">Ekstraksi Kontur & Deskriptor Visual</h2>
+                <p class="text-slate-400 mt-4 max-w-2xl mx-auto">Setelah Suzuki's Algorithm mengekstrak koordinat piksel tepi, sistem menghitung parameter geometris untuk QC.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <div class="bg-[#0F172A] p-6 rounded-2xl border border-[#334155]">
+                    <h3 class="text-xl font-bold mb-4 text-center text-[#38BDF8]">Simulasi Pemindaian Kontur Piston (WebGL)</h3>
+                    <div class="chart-container" id="contourScatter" style="height: 350px;"></div>
+                </div>
+
+                <div class="bg-[#0F172A] p-6 rounded-2xl border border-[#334155] flex flex-col justify-center">
+                    <h3 class="text-xl font-bold mb-4 text-center text-[#818CF8]">Analisis Geometri: Ideal vs Scanned</h3>
+                    <div class="chart-container" style="height: 320px;">
+                        <canvas id="descriptorRadar"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <div class="glass-card p-8 rounded-3xl order-2 lg:order-1">
+                <h3 class="text-xl font-bold mb-6 text-center text-[#F8FAFC]">Dampak Kesalahan Tuning Parameter</h3>
+                <div class="chart-container" style="height: 350px;">
+                    <canvas id="parameterBar"></canvas>
+                </div>
+            </div>
+
+            <div class="order-1 lg:order-2 flex flex-col justify-center">
+                <h2 class="text-3xl font-bold mb-6 text-[#F8FAFC]">Simulasi Parameter Canny</h2>
+                <p class="text-lg text-slate-300 leading-relaxed mb-6">
+                    Kalibrasi algoritma sangat menentukan tingkat <em>False Positives</em> (garis sampah/kotor) dan <em>False Negatives</em> (garis terputus/hilang).
+                </p>
+                <div class="space-y-4">
+                    <div class="bg-[#1E293B] p-4 rounded-xl border border-[#334155]">
+                        <strong class="text-white block mb-1">Sigma (Gaussian)</strong>
+                        <span class="text-sm text-slate-400">Terlalu rendah: Noise terlihat kotor. Terlalu tinggi: Batas bergeser dari aslinya.</span>
+                    </div>
+                    <div class="bg-[#1E293B] p-4 rounded-xl border border-[#334155]">
+                        <strong class="text-[#FBBF24] block mb-1">Low Threshold</strong>
+                        <span class="text-sm text-slate-400">Terlalu rendah: Muncul banyak garis sampah. Terlalu tinggi: Tepi mulai terputus.</span>
+                    </div>
+                    <div class="bg-[#1E293B] p-4 rounded-xl border border-[#334155]">
+                        <strong class="text-[#38BDF8] block mb-1">High Threshold</strong>
+                        <span class="text-sm text-slate-400">Terlalu rendah: Terlalu banyak tepi terdeteksi. Terlalu tinggi: Objek utama hilang sepenuhnya.</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-gradient-to-r from-[#111827] to-[#1E293B] rounded-3xl p-8 md:p-12 border border-[#334155] shadow-2xl relative overflow-hidden">
+            <div class="absolute -right-20 -top-20 text-[200px] opacity-5">&#128663;</div>
+            <h2 class="text-2xl md:text-3xl font-bold mb-6 text-[#38BDF8]">Refleksi: Plat Nomor di Malam Hari</h2>
+            <div class="bg-[#0F172A]/50 p-6 md:p-8 rounded-2xl border-l-4 border-[#FBBF24] backdrop-blur-sm relative z-10">
+                <p class="text-lg md:text-xl text-slate-300 leading-relaxed mb-4 font-mono text-sm">
+                    <strong>Kasus:</strong> Anda diminta mendeteksi plat nomor kendaraan di malam hari dengan lampu sorot yang sangat terang. Mengapa Canny bekerja lebih baik daripada Otsu?
+                </p>
+                <div class="w-full h-px bg-[#334155] my-6"></div>
+                <p class="text-white leading-relaxed font-light">
+                    Metode Otsu (Global Thresholding) akan gagal total karena lampu sorot menciptakan efek <em>overexposure</em>. Hal ini merusak distribusi bimodal histogram, membuat seluruh area plat terlihat putih menyatu dan menghilangkan kontras latar-objek.<br><br>
+                    Sebaliknya, <strong>Canny Edge Detection</strong> secara matematis mencari turunan (perubahan gradien). Selama masih ada sedikit perbedaan intensitas lokal antara cat huruf dan latar plat putih yang tersorot, operator Sobel pada Canny tetap mampu mendeteksi batas transisi tersebut secara akurat.
+                </p>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="mt-24 py-8 border-t border-[#334155] text-center text-slate-500 text-sm">
+        <p>INFOGRAPHIC SPA &bull; DATA VISUALIZATION &bull; COMPUTER VISION QC</p>
+    </footer>
+
+    <script>
+        const wrapLabel = (label) => {
+            if (label.length <= 16) return label;
+            let words = label.split(' ');
+            let lines = [];
+            let currentLine = '';
+            for (let word of words) {
+                if ((currentLine + word).length > 16) {
+                    if (currentLine) lines.push(currentLine.trim());
+                    currentLine = word + ' ';
+                } else {
+                    currentLine += word + ' ';
+                }
+            }
+            if (currentLine) lines.push(currentLine.trim());
+            return lines;
+        };
+
+        const globalTooltip = {
+            plugins: {
+                tooltip: {
+                    backgroundColor: '#1E293B',
+                    titleColor: '#38BDF8',
+                    bodyColor: '#F8FAFC',
+                    borderColor: '#334155',
+                    borderWidth: 1,
+                    padding: 12,
+                    callbacks: {
+                        title: function(tooltipItems) {
+                            const item = tooltipItems[0];
+                            let label = item.chart.data.labels[item.dataIndex];
+                            if (Array.isArray(label)) {
+                              return label.join(' ');
+                            } else {
+                              return label;
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        Chart.defaults.color = '#94A3B8';
+        Chart.defaults.font.family = 'Inter';
+
+        const ctxHys = document.getElementById('hysteresisChart').getContext('2d');
+        const hysLabels = ["Background", "Tepi Lemah (Noise)", "Tepi Kuat (Objek)", "Tepi Lemah (Tersambung)", "Background"].map(wrapLabel);
+        
+        new Chart(ctxHys, {
+            type: 'line',
+            data: {
+                labels: hysLabels,
+                datasets: [
+                    {
+                        label: 'Sinyal Gradien Intensitas',
+                        data: [10, 45, 90, 50, 15],
+                        borderColor: '#F8FAFC',
+                        backgroundColor: 'rgba(248, 250, 252, 0.1)',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#F8FAFC',
+                        pointRadius: 6,
+                        tension: 0.4,
+                        fill: false,
+                        zIndex: 3
+                    },
+                    {
+                        label: 'High Threshold (Pasti Tepi)',
+                        data: [75, 75, 75, 75, 75],
+                        borderColor: '#38BDF8',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        pointRadius: 0,
+                        fill: false,
+                        zIndex: 2
+                    },
+                    {
+                        label: 'Low Threshold (Batas Bawah)',
+                        data: [30, 30, 30, 30, 30],
+                        borderColor: '#FBBF24',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        pointRadius: 0,
+                        fill: '-1',
+                        backgroundColor: 'rgba(251, 191, 36, 0.05)',
+                        zIndex: 1
+                    }
+                ]
+            },
+            options: {
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    ...globalTooltip.plugins,
+                    legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8 } }
+                },
+                scales: {
+                    y: { min: 0, max: 100, grid: { color: '#334155' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        const ctxRadar = document.getElementById('descriptorRadar').getContext('2d');
+        const radarLabels = ["Area (Luas)", "Perimeter (Keliling)", "Circularity", "Bounding Box Area", "Eccentricity"].map(wrapLabel);
+
+        new Chart(ctxRadar, {
+            type: 'radar',
+            data: {
+                labels: radarLabels,
+                datasets: [
+                    {
+                        label: 'Ideal Ring (Spek Pabrik)',
+                        data: [100, 100, 100, 100, 10],
+                        backgroundColor: 'rgba(56, 189, 248, 0.2)',
+                        borderColor: '#38BDF8',
+                        pointBackgroundColor: '#38BDF8',
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Scanned Ring (Defective)',
+                        data: [85, 95, 75, 98, 45],
+                        backgroundColor: 'rgba(251, 191, 36, 0.2)',
+                        borderColor: '#FBBF24',
+                        pointBackgroundColor: '#FBBF24',
+                        borderWidth: 2
+                    }
+                ]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: { ...globalTooltip.plugins, legend: { position: 'bottom' } },
+                scales: {
+                    r: {
+                        angleLines: { color: '#334155' },
+                        grid: { color: '#334155' },
+                        pointLabels: { color: '#F8FAFC', font: { size: 11 } },
+                        ticks: { display: false, min: 0, max: 100 }
+                    }
+                }
+            }
+        });
+
+        const ctxBar = document.getElementById('parameterBar').getContext('2d');
+        const barLabels = ["Sigma (Blur)", "Low Threshold", "High Threshold"].map(wrapLabel);
+
+        new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: barLabels,
+                datasets: [
+                    {
+                        label: 'Error if Set TOO LOW',
+                        data: [80, 95, 85],
+                        backgroundColor: 'rgba(129, 140, 248, 0.8)',
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Error if Set TOO HIGH',
+                        data: [90, 60, 100],
+                        backgroundColor: 'rgba(251, 191, 36, 0.8)',
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    ...globalTooltip.plugins,
+                    legend: { position: 'bottom' }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: { display: true, text: 'Tingkat Keparahan Error (%)' },
+                        grid: { color: '#334155' }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        const numPts = 200;
+        const radius = 50;
+        const xPts = [];
+        const yPts = [];
+        
+        for(let i=0; i<numPts; i++) {
+            const theta = (i / numPts) * 2 * Math.PI;
+            const noise = (Math.random() - 0.5) * 3;
+            const isDefect = (i > 45 && i < 55); 
+            const currentR = isDefect ? radius - 8 + noise : radius + noise;
+            
+            xPts.push(Math.cos(theta) * currentR);
+            yPts.push(Math.sin(theta) * currentR);
+        }
+
+        const trace = {
+            x: xPts,
+            y: yPts,
+            mode: 'markers',
+            type: 'scattergl',
+            marker: {
+                color: '#38BDF8',
+                size: 6,
+                line: { color: '#0F172A', width: 1 }
+            },
+            name: 'Contour Points'
+        };
+
+        const layout = {
+            margin: { l: 10, r: 10, t: 10, b: 10 },
+            paper_bgcolor: 'transparent',
+            plot_bgcolor: 'transparent',
+            xaxis: { showgrid: false, zeroline: false, showticklabels: false, range: [-60, 60] },
+            yaxis: { showgrid: false, zeroline: false, showticklabels: false, range: [-60, 60], scaleanchor: 'x', scaleratio: 1 },
+            hovermode: 'closest',
+            annotations: [{
+                x: 30, y: 35,
+                text: 'Defect Terdeteksi',
+                showarrow: true,
+                arrowhead: 2,
+                arrowcolor: '#FBBF24',
+                font: { color: '#FBBF24', family: 'Inter' },
+                ax: 40, ay: -40
+            }]
+        };
+
+        Plotly.newPlot('contourScatter', [trace], layout, {displayModeBar: false, responsive: true});
+
+    </script>
+</body>
+</html>
